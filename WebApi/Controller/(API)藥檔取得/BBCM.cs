@@ -1,77 +1,114 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IBM.Data.DB2.Core;
+using System.Data;
+using System.Configuration;
 using Basic;
+using SQLUI;
+using System.Xml;
 using HIS_DB_Lib;
-using System.Text;
 using System.IO;
+using System.Text;
 
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
-namespace DB2VM_API.Controller._API_藥檔取得
+namespace DB2VM.Controller
 {
-    [Route("api/[controller]")]
+    [Route("dbvm/[controller]")]
     [ApiController]
-    public class BBCM : ControllerBase
+    public class BBCMController : ControllerBase
     {
+    
         static public string API_Server = "http://127.0.0.1:4433";
+
         [HttpGet]
-        public string Get(string? code)
+        public string Get(string Code)
         {
-            MyTimerBasic myTimerBasic = new MyTimerBasic();
-            returnData returnData = new returnData();
-            try
-            {
-                //List<medClass> medClasses = new List<medClass>();
-                List<medClass> medClasses = ExcuteEXCELL();
-                medClass.add_med_clouds(API_Server, medClasses);
-                //string url = @"https://www1.ndmctsgh.edu.tw/pharm/API/MedMainOnline/GetMedSearch?selecttype=EngName&content=Candis";
-                //string json_out = Basic.Net.WEBApiGet(url);
-                returnData.Code = 200;
-                returnData.Result = $"取得藥品資料共{medClasses.Count}筆";
-                returnData.TimeTaken = $"{myTimerBasic}";
-                returnData.Data = medClasses;
-                return returnData.JsonSerializationt(true);
-            }
-            catch(Exception ex)
-            {
-                returnData.Code = -200;
-                returnData.Result = ex.Message;
-                return returnData.JsonSerializationt(true);
-            }       
-        }   
-        private List<medClass> ExcuteEXCELL()
-        {
+            //if (Code.StringIsEmpty()) return "[]";
+            System.Text.StringBuilder soap = new System.Text.StringBuilder();
+            soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+            soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+            soap.Append("<soap:Body>");
+            soap.Append("<GetSTK_XML xmlns=\"http://tempuri.org/\">");
+            soap.Append($"<prs_stk>{Code}</prs_stk>");
+            soap.Append("</GetSTK_XML>");
+            soap.Append("</soap:Body>");
+            soap.Append("</soap:Envelope>");
+            string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetSTK_XML", soap);
+            //string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetSTK_XML", soap);
+            //string[] Node_array = new string[] { "soap:Body", "Drug_DATAResponse", "Drug_DATAResult"};
+
+            //string[] Node_array = new string[] { "soap:Body", "Drug_DATAResponse", "Drug_DATAResult", "diffgr:diffgram", "NewDataSet", "Temp1" };
+            //List<XmlElement> xmlElements = Xml.Xml_GetElements(Node_array);
+            //string[] Node_array = new string[] { "soap:Body", "GetSTK_XMLResponse", "GetSTK_XMLResult", "data", "drug" };
+
+
+
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Xml);
+
+            XmlNamespaceManager nsManager = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+            nsManager.AddNamespace("tempuri", "http://tempuri.org/");
+            //nsManager.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+            //nsManager.AddNamespace("xsd", "http://www.w3.org/2001/XMLSchema");
+            XmlNodeList drugNodes = xmlDoc.SelectNodes("//data/drug", nsManager);
+            //XmlNodeList temp1Nodes = xmlDoc.SelectNodes("//tempuri:drug", nsManager);
             List<medClass> medClasses = new List<medClass>();
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            string filePath = @"C:\Users\user\source\repos\MTSC__DBVM_API\WebApi\medPage.xlsx"; ;
-            using (StreamReader sr = new StreamReader(filePath, Encoding.GetEncoding("Big5")))
+
+            if (drugNodes == null || drugNodes.Count == 0)
             {
-                sr.ReadLine();
-                while (!sr.EndOfStream)
-                {
-                    string row = sr.ReadLine();
-                    string[] values = row.Split(",");
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        values[i] = values[i].Trim('"');
-                    }
-                    medClass medClass = new medClass
-                    {
-                        藥品碼 = values[0],
-                        藥品名稱 = values[1],
-                        包裝單位 = values[3],
-                        中西藥 = "西藥"
-                    };
-                    medClasses.Add(medClass);
-                }
+                return "[]";
             }
-            return medClasses;
+
+            foreach (XmlNode node in drugNodes)
+            {
+                string 藥品碼 = node.SelectSingleNode("prs_stk")?.InnerText ?? "";
+                string 藥品名稱 = node.SelectSingleNode("prs_name")?.InnerText ?? "";
+                string 藥品學名 = node.SelectSingleNode("prs_sc_name")?.InnerText ?? "";
+                string 管制級別 = node.SelectSingleNode("control_level")?.InnerText ?? "";
+                string 圖片網址 = node.SelectSingleNode("url")?.InnerText ?? "";
+                string 最小包裝單位 = node.SelectSingleNode("prs_prc_unit")?.InnerText ?? "";
+                string 類別 = node.SelectSingleNode("med_type")?.InnerText ?? "";
+
+
+                // 檢查 MCODE 是否為空
+                if (藥品碼.StringIsEmpty()) continue;
+
+                medClass medClass = new medClass
+                {
+                    藥品碼 = 藥品碼,
+                    藥品名稱 = 藥品名稱,
+                    藥品學名 = 藥品學名,
+                    管制級別 = 管制級別,
+                    中西藥 = "西藥",
+                    最小包裝單位 = 最小包裝單位,
+                    類別 = 類別,
+                    圖片網址 = 圖片網址
+
+                };
+                if (medClass.管制級別.StringIsEmpty()) medClass.管制級別 = "N";
+                medClasses.Add(medClass);
+
+            }
+
 
             
+            if (medClasses.Count == 0) return "[]";
+            returnData returnData_medClass = medClass.add_med_clouds(API_Server, medClasses);
+            if (returnData_medClass == null || returnData_medClass.Code != 200)
+            {
+                returnData_medClass.Data = medClasses;
+                return returnData_medClass.JsonSerializationt(true);
+            }
+            string jsonString = medClasses.JsonSerializationt();
+            return jsonString;
         }
+       
+        
     }
+
+
 }

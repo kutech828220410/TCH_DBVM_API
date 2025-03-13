@@ -1,33 +1,35 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IBM.Data.DB2.Core;
+using System.Data;
+using System.Configuration;
 using Basic;
-using HIS_DB_Lib;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using IBM.Data.DB2.Core;
+using System.Data;
+using System.Configuration;
+using Basic;
 using SQLUI;
-using MySql.Data.MySqlClient;
+using System.Xml;
+using HIS_DB_Lib;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
-namespace DB2VM_API.Controller._API_處方取得
+namespace DB2VM
 {
-    [Route("api/[controller]")]
+    [Route("dbvm/[controller]")]
     [ApiController]
-    public class BBAR : ControllerBase
+    public class BBARController : ControllerBase
     {
-        static public string API_Server = "http://127.0.0.1:4433";
-        //static public string API_Server = "https://www.kutech.tw:4443";
-
-        static public string Server = "127.0.0.1";
-        static public string DB = "dbvm_his";
-        static public string UserName = "his_user";
-        static public string Password = "hson11486";
-        static public uint Port = 3306;
-        static private MySqlSslMode SSLMode = MySqlSslMode.None;
-
         [HttpGet]
-        public string get_order(string? BarCode)
+        public string Get(string? BarCode)
         {
             MyTimerBasic myTimerBasic = new MyTimerBasic();
             returnData returnData = new returnData();
@@ -36,209 +38,717 @@ namespace DB2VM_API.Controller._API_處方取得
                 if (BarCode.StringIsEmpty())
                 {
                     returnData.Code = -200;
-                    returnData.Result = "Barcode空白";
+                    returnData.Result = $"傳入BarCode 空白";
                     return returnData.JsonSerializationt(true);
                 }
-                //BarCode += "%"; 
-                SQLControl sQLControl_med_carInfo = new SQLControl(Server, DB, "yc_pha_order", UserName, Password, Port, SSLMode);
-                List<object[]> list_pha_order = sQLControl_med_carInfo.GetRowsByLike(null, enum_yc_pha_order.ST_QRCODE.GetEnumName(), BarCode);
-                List<object[]> string_pha_order = new List<object[]>();
-                foreach (var order in list_pha_order)
+                if (BarCode.ToUpper() == "test".ToUpper())
                 {
-                    object[] stringifiedOrder = Array.ConvertAll(order, item => item?.ToString() ?? string.Empty);
-                    string_pha_order.Add(stringifiedOrder);
-                }
-                List<phaOrderClass> sql_medCar = string_pha_order.SQLToClass<phaOrderClass, enum_yc_pha_order>();
-                List<OrderClass> orderClasses = new List<OrderClass>();
-                foreach (phaOrderClass phaOrderClass in sql_medCar)
-                {
-                    if (phaOrderClass.CD_FROM == "O") phaOrderClass.CD_FROM = "門診";
-                    if (phaOrderClass.CD_FROM == "E") phaOrderClass.CD_FROM = "急診";
-                    if (phaOrderClass.CD_FROM == "I") phaOrderClass.CD_FROM = "住院";
-                    if (phaOrderClass.CD_ORDER == "N") phaOrderClass.CD_ORDER = "門急";
-                    if (phaOrderClass.CD_ORDER == "B") phaOrderClass.CD_ORDER = "首日量";
-                    if (phaOrderClass.CD_ORDER == "S") phaOrderClass.CD_ORDER = "STAT";
-                    if (phaOrderClass.CD_ORDER == "M") phaOrderClass.CD_ORDER = "出院帶藥";
+                    List<OrderClass> orderClasses = new List<OrderClass>();
 
-
-                    //if (phaOrderClass.CD_CANCEL == "N") phaOrderClass.CD_FROM = "New";
-                    //if (phaOrderClass.CD_CANCEL == "Y") phaOrderClass.CD_FROM = "DC";
-                    string dateTime = $"{phaOrderClass.DM_DRUG.Substring(0,4)}-{phaOrderClass.DM_DRUG.Substring(4, 2)}-{phaOrderClass.DM_DRUG.Substring(6, 2)}" +
-                        $" {phaOrderClass.DM_DRUG.Substring(8, 2)}:{phaOrderClass.DM_DRUG.Substring(10, 2)}:{phaOrderClass.DM_DRUG.Substring(12, 2)}";
-                    if(phaOrderClass.CD_CANCEL == "Y")
+                    for (int i = 0; i < 4; i++)
                     {
+                        OrderClass orderClass = new OrderClass();
+                        orderClass.GUID = Guid.NewGuid().ToString();
+                        orderClass.PRI_KEY = $"TEST_{DateTime.Now.ToDateTimeString_6()}";
+                        orderClass.藥局代碼 = "OPD";
+                        orderClass.藥袋類型 = "";
+                        orderClass.領藥號 = $"{DateTime.Now.ToDateTimeTiny(TypeConvert.Enum_Year_Type.Anno_Domini)}";
+                        orderClass.病人姓名 = "測試";
+                        orderClass.藥袋條碼 = orderClass.PRI_KEY;
+                        orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
+                        orderClass.開方日期 = DateTime.Now.ToDateTimeString_6();
 
-                    }
-                    OrderClass orderClass = new OrderClass
-                    {
-                        PRI_KEY = BarCode,
-                        藥袋條碼 = BarCode,
-                        開方日期 = dateTime,
-                        藥袋類型 = phaOrderClass.CD_ORDER,
-                        藥局代碼 = phaOrderClass.CD_FROM,
-                        病歷號 = phaOrderClass.ID_PATIENT,
-                        領藥號 = phaOrderClass.IT_DRUGNO,
-                        病人姓名 = phaOrderClass.NM_PATIENT,
-                        藥品碼 = phaOrderClass.ID_DRUG,
-                        藥品名稱 = phaOrderClass.NM_DRUG,
-                        單次劑量 = phaOrderClass.DB_DOSE,
-                        頻次 = phaOrderClass.ST_FREQUENCY,
-                        途徑 = phaOrderClass.ST_PATH,
-                        交易量 = $"-{phaOrderClass.DB_AMOUNT}",
-                        //交易量 = ((phaOrderClass.DB_AMOUNT).ToString(),
-                        //批序 = phaOrderClass.DATETIMESEQ,
-                        //藥袋類型 = phaOrderClass.CD_CANCEL,
-                        //病房 = orderlistClass.病房,
-                        床號 = phaOrderClass.ST_BEDNO,
-                        狀態 = "未過帳",
-                        備註 = ""
-                    };
-                    string 批序 = phaOrderClass.DATETIMESEQ;
-                    string 藥袋狀態 = phaOrderClass.CD_CANCEL;
-                    if(藥袋狀態 == "N")
-                    {
-                        藥袋狀態 = "NEW";
-                    }
-                    else
-                    {
-                        藥袋狀態 = "DC";
-                    }
-      
-                    orderClass.批序 = $"{批序}-[{藥袋狀態}]";
-                    orderClasses.Add(orderClass);
-                }
-                
+                        if (i == 0) orderClass.藥品碼 = "UNIO04";
+                        if (i == 0) orderClass.交易量 = (-3).ToString();
+                        if (i == 1) orderClass.藥品碼 = "GLUO04";
+                        if (i == 1) orderClass.交易量 = (-28).ToString();
+                        if (i == 2) orderClass.藥品碼 = "BIME00";
+                        if (i == 2) orderClass.交易量 = (-2).ToString();
+                        if (i == 3) orderClass.藥品碼 = "CARE01";
+                        if (i == 3) orderClass.交易量 = (-4).ToString();
+                        orderClass.狀態 = "未過帳";
 
-
-            
-                //List<OrderClass> update_OrderClass = OrderClass.update_order_list(API_Server, orderClasses);
-                if(orderClasses.Count == 0 )
-                {
-                    returnData.Code = 200;
-                    returnData.Result = $"此條碼無資料";
-                    return returnData.JsonSerializationt(true);
-                }
-
-                returnData returnData_update_order = OrderClass.update_order_list_new(API_Server, orderClasses);
-                if (returnData_update_order.Code != 200) return returnData_update_order.JsonSerializationt(true);
-                List<OrderClass> out_OrderClass = returnData_update_order.Data.ObjToClass<List<OrderClass>>();
-
-
-                returnData.Data = out_OrderClass;
-                returnData.Code = 200;
-                returnData.Result = $"取得醫令資料{out_OrderClass.Count}筆資料";
-                return returnData.JsonSerializationt(true);
-            }
-            catch(Exception ex)
-            {
-                returnData.Code = -200;
-                returnData.Result = $"Exception:{ex.Message}";
-                return returnData.JsonSerializationt(true);
-            }
-        }
-        [HttpGet("date")]
-        public string get_order_by_date(string? date)
-        {
-            MyTimerBasic myTimerBasic = new MyTimerBasic();
-            returnData returnData = new returnData();
-            try
-            {
-                if (date.StringIsEmpty())
-                {
-                    returnData.Code = -200;
-                    returnData.Result = "date空白";
-                    return returnData.JsonSerializationt(true);
-                }
-                List<orderlistClass> orderlistClasses = orderlistClass.get_order_by_date(date);
-                List<medClass> medClasses = medClass.get_med_cloud(API_Server);
-                Dictionary<string, List<medClass>> medClassDict = medClass.CoverToDictionaryByCode(medClasses);
-                List<OrderClass> orderClasses = new List<OrderClass>();
-                foreach(orderlistClass orderlistClass in orderlistClasses)
-                {
-                    foreach (var medicationItems in orderlistClass.medicationItems)
-                    {
-                        medClass targetMed = medClasses.Where(temp => temp.料號 == medicationItems.料號).FirstOrDefault();
-                        if (targetMed == null)
-                        {
-                            targetMed = new medClass();
-                            targetMed.藥品碼 = medicationItems.料號;
-                        }
-                        string 開方日期 = "";
-                        //DateTime dd = orderlistClass.orderDate.StringToDateTime();
-                        //string sqlFormattedDate = dd.ToString("yyyy-MM-dd HH:mm:ss");
-                        if (orderlistClass.開方日期.StringIsEmpty() == false)
-                        {
-                            開方日期 = orderlistClass.開方日期;
-                        }
-                        else
-                        {
-                            開方日期 = orderlistClass.orderDate;
-                        }
-                        OrderClass orderClass = new OrderClass
-                        {
-                            PRI_KEY = orderlistClass.藥袋條碼,
-                            藥袋條碼 = orderlistClass.藥袋條碼,
-                            開方日期 = 開方日期,
-                            病歷號 = orderlistClass.病歷號.ToString(),
-                            領藥號 = orderlistClass.領藥號.ToString(),
-                            病人姓名 = orderlistClass.病人姓名,
-                            藥品碼 = targetMed.藥品碼,
-                            藥品名稱 = medicationItems.藥品名稱,
-                            單次劑量 = medicationItems.單次劑量.ToString(),
-                            頻次 = medicationItems.頻次,
-                            途徑 = medicationItems.途徑,
-                            交易量 = (medicationItems.交易量 * -1).ToString(),
-                            批序 = medicationItems.批序.ToString(),
-                            藥袋類型 = medicationItems.藥袋類型,
-                            病房 = orderlistClass.病房,
-                            床號 = orderlistClass.床號,
-                            狀態 = "未過帳"
-                        };
-                        if (orderClass.藥袋類型 == "A") orderClass.藥袋類型 = "New";
-                        if (orderClass.藥袋類型 == "D") orderClass.藥袋類型 = "DC";
                         orderClasses.Add(orderClass);
                     }
+                    returnData.Code = 200;
+                    returnData.Data = orderClasses;
+                    returnData.Result = $"取得測試醫令成功,共{orderClasses.Count}筆資料";
+                    returnData.TimeTaken = myTimerBasic.ToString();
                 }
-               
-                //medCarInfoClass.update_order_list(API_Server, orderClasses);
-                //List<OrderClass> update_OrderClass = medCarInfoClass.update_order_list(API_Server, orderClasses);
-                returnData.Data = orderClasses;
-                returnData.Code = 200;
-                return returnData.JsonSerializationt(true);
+                if (BarCode.Length == 9)
+                {
+                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4" || BarCode.Substring(0, 1) == "7")
+                    {
+                        System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                        soap.Append("<soap:Body>");
+                        soap.Append("<GetCodeOE_XML  xmlns=\"http://tempuri.org/\">");
+                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                        soap.Append("</GetCodeOE_XML >");
+                        soap.Append("</soap:Body>");
+                        soap.Append("</soap:Envelope>");
+                        string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeOE_XML", soap);
+                        GetCodeOE_XML(Xml, ref returnData);
+                        returnData.TimeTaken = myTimerBasic.ToString();
+                        return returnData.JsonSerializationt(true);
+                    }
+                    if (BarCode.Substring(0, 1) == "8")
+                    {
+                        System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                        soap.Append("<soap:Body>");
+                        soap.Append("<GetCodeSH_XML  xmlns=\"http://tempuri.org/\">");
+                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                        soap.Append("</GetCodeSH_XML >");
+                        soap.Append("</soap:Body>");
+                        soap.Append("</soap:Envelope>");
+                        string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeSH_XML", soap);
+                        GetCodeSH_XML(Xml, ref returnData);
+                        returnData.TimeTaken = myTimerBasic.ToString();
+                        return returnData.JsonSerializationt(true);
+                    }
+                }
+                else if (BarCode.Length == 8)
+                {
+                    System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                    soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                    soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                    soap.Append("<soap:Body>");
+                    soap.Append("<GetCodeCTLI_XML  xmlns=\"http://tempuri.org/\">");
+                    soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                    soap.Append("</GetCodeCTLI_XML >");
+                    soap.Append("</soap:Body>");
+                    soap.Append("</soap:Envelope>");
+                    string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeCTLI_XML", soap);
+                    GetCodeCTLI_XML(Xml, ref returnData);
+
+                    if (returnData.Code != 200)
+                    {
+                        soap = new System.Text.StringBuilder();
+                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                        soap.Append("<soap:Body>");
+                        soap.Append("<GetCodeCTLO_XML  xmlns=\"http://tempuri.org/\">");
+                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                        soap.Append("</GetCodeCTLO_XML >");
+                        soap.Append("</soap:Body>");
+                        soap.Append("</soap:Envelope>");
+                        Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeCTLO_XML", soap);
+                        GetCodeCTLO_XML(Xml, ref returnData);
+                    }
+
+                    returnData.TimeTaken = myTimerBasic.ToString();
+                    return returnData.JsonSerializationt(true);
+                }
+                else
+                {
+                    returnData.Code = -200;
+                    returnData.Result = $"條碼錯誤";
+                    return returnData.JsonSerializationt(true);
+                }
+
+                string jsonString = returnData.JsonSerializationt(true);
+                return jsonString;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
                 returnData.Code = -200;
-                returnData.Result = $"Exception:{ex.Message}";
+                returnData.Result = $"Exception:{e.Message}";
                 return returnData.JsonSerializationt(true);
             }
+
         }
-        [HttpPost("get_order")]
-        public string get_order([FromBody] returnData returnData)
+
+        [Route("MRN")]
+        [HttpPost]
+        public string POST_MRN(returnData returnData)
         {
-            List<orderlistClass> orderlistClasses = returnData.Data.ObjToClass<List<orderlistClass>>();
-            List<OrderClass> orderClasses = new List<OrderClass>();
-            foreach (var orderlistClass in orderlistClasses)
+            MyTimerBasic myTimerBasic = new MyTimerBasic();
+            returnData.Method = "POST_MRN";
+            try
             {
-                foreach(var medicationItems in orderlistClass.medicationItems)
+                if (returnData.ValueAry.Count < 1)
                 {
-                    OrderClass orderClass = new OrderClass
+                    returnData.Code = -200;
+                    returnData.Result = $"輸入資料內容錯誤,需為病歷號、(選)[起始時間、結束時間]";
+                    return returnData.JsonSerializationt(true);
+                }
+                List<OrderClass> orderClasses = new List<OrderClass>();
+                if (returnData.ValueAry.Count == 3)
+                {
+                    string patcode = returnData.ValueAry[0];
+                    string dt_st = returnData.ValueAry[1];
+                    string dt_end = returnData.ValueAry[2];
+                    if (dt_st.Check_Date_String() == false || dt_end.Check_Date_String() == false)
                     {
-                        開方日期 = orderlistClass.開方日期.StringToDateTime().ToDateTimeString(),
-                        病歷號 = orderlistClass.病歷號.ToString(),
-                        藥品碼 = medicationItems.料號,
-                        藥品名稱 = medicationItems.藥品名稱,
-                        單次劑量 = medicationItems.單次劑量.ToString(),
-                        頻次 = medicationItems.頻次,
-                        途徑 = medicationItems.途徑,
-                        交易量 = medicationItems.交易量.ToString()
-                    };
-                    orderClasses.Add(orderClass);
-                }               
+                        returnData.Code = -200;
+                        returnData.Result = $"輸入資料日期格式錯誤";
+                        return returnData.JsonSerializationt(true);
+                    }
+
+                    orderClasses = OrderClass.get_by_PATCODE("http://127.0.0.1:4433", patcode, dt_st.StringToDateTime(), dt_end.StringToDateTime());
+                }
+                if (returnData.ValueAry.Count == 1)
+                {
+                    string patcode = returnData.ValueAry[0];
+                    orderClasses = OrderClass.get_by_PATCODE("http://127.0.0.1:4433", patcode);
+                }
+
+                returnData.Code = 200;
+                returnData.TimeTaken = myTimerBasic.ToString();
+                returnData.Data = orderClasses;
+                returnData.Result = $"取得醫令共{orderClasses.Count}筆資料";
+                return returnData.JsonSerializationt();
             }
+            catch (Exception e)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"Exception : {e.Message}";
+                return returnData.JsonSerializationt(true);
+            }
+            finally
+            {
+
+            }
+        }
+
+        [Route("BAG_NUM")]
+        [HttpPost]
+        public string POST_BAG_NUM(returnData returnData)
+        {
+            MyTimerBasic myTimerBasic = new MyTimerBasic();
+            returnData.Method = "POST_BAG_NUM";
+            try
+            {
+                if (returnData.ValueAry.Count != 2)
+                {
+                    returnData.Code = -200;
+                    returnData.Result = $"輸入資料內容錯誤,需為領藥號、日期";
+                    return returnData.JsonSerializationt(true);
+                }
+                string print_que = returnData.ValueAry[0];
+                string print_date = returnData.ValueAry[1];
+                if (print_date.Check_Date_String() == false)
+                {
+                    returnData.Code = -200;
+                    returnData.Result = $"輸入資料日期格式錯誤";
+                    return returnData.JsonSerializationt(true);
+                }
+                print_date = print_date.StringToDateTime().ToDateString(TypeConvert.Enum_Year_Type.Republic_of_China, "");
+
+                System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                soap.Append("<soap:Body>");
+                soap.Append("<GetCodeOE_XML  xmlns=\"http://tempuri.org/\">");
+                soap.Append($"<print_que>{print_que}</print_que>");
+                soap.Append($"<print_date>{print_date}</print_date>");
+                soap.Append("</GetCodeOE_XML >");
+                soap.Append("</soap:Body>");
+                soap.Append("</soap:Envelope>");
+                string Xml = Basic.Net.WebServicePost("http://192.168.8.108/TmhtcAdcWS/Service.asmx?op=GetCodeOE_XML", soap);
+                GetCodeOE_XML(Xml, ref returnData);
+
+                if (returnData.Code != 200)
+                {
+                    soap = new System.Text.StringBuilder();
+                    soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                    soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                    soap.Append("<soap:Body>");
+                    soap.Append("<GetCodeSH_XML  xmlns=\"http://tempuri.org/\">");
+                    soap.Append($"<print_que>{print_que}</print_que>");
+                    soap.Append($"<print_date>{print_date}</print_date>");
+                    soap.Append("</GetCodeSH_XML >");
+                    soap.Append("</soap:Body>");
+                    soap.Append("</soap:Envelope>");
+                    Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeSH_XML", soap);
+                    GetCodeSH_XML(Xml, ref returnData);
+                }
+
+
+                return returnData.JsonSerializationt();
+            }
+            catch (Exception e)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"Exception : {e.Message}";
+                return returnData.JsonSerializationt(true);
+            }
+            finally
+            {
+
+            }
+        }
+
+        // 計算字串乘積的函式
+        static double CalculateProduct(string input)
+        {
+            // 使用 Split 方法將字串分割
+            string[] parts = input.Split('/');
+
+            // 將分割出的字串轉換成整數
+            double num1 = double.Parse(parts[0]);
+            double num2 = double.Parse(parts[1]);
+
+            // 返回計算結果
+            return (double)num1 / num2;
+        }
+
+        public void GetCodeOE_XML(string Xml, ref returnData returnData)
+        {
+            string[] Node_array_pat = new string[] { "soap:Body", "GetCodeOE_XMLResponse", "GetCodeOE_XMLResult", "data", "pat" };
+            string[] Node_array_drug = new string[] { "soap:Body", "GetCodeOE_XMLResponse", "GetCodeOE_XMLResult", "data", "pat", "drug" };
+            XmlElement xmlElement = Xml.Xml_GetElement(Node_array_pat);
+            if (xmlElement == null)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"HIS查無此藥袋資料";
+                return;
+            }
+            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");
+            string que_no = xmlElement.Xml_GetInnerXml("que_no");
+            string que_unit = xmlElement.Xml_GetInnerXml("que_unit");
+            string patient_no = xmlElement.Xml_GetInnerXml("patient_no");
+            string patient_name = xmlElement.Xml_GetInnerXml("patient_name");
+            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");
+            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday");
+            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no");
+            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed");
+            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date");
+            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");
+            string odr_date = xmlElement.Xml_GetInnerXml("odr_date");
+            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept");
+            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla");
+            string dr_name = xmlElement.Xml_GetInnerXml("dr_name");
+            string prt_date = xmlElement.Xml_GetInnerXml("prt_date");
+            string que_seq = xmlElement.Xml_GetInnerXml("que_seq");
+            string create_date = xmlElement.Xml_GetInnerXml("create_date");
+            string mod_date = xmlElement.Xml_GetInnerXml("mod_date");
+            string barcode = xmlElement.Xml_GetInnerXml("barcode");
+            string xml_create_time = xmlElement.Xml_GetInnerXml("xml_create_time");
+            List<OrderClass> orderClasses = new List<OrderClass>();
+            if (barcode.StringIsEmpty())
+            {
+                barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
+            }
+            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            List<OrderClass> orderClasses_buf = new List<OrderClass>();
+            List<OrderClass> orderClasses_add = new List<OrderClass>();
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Xml);
+            XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsmgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+            nsmgr.AddNamespace("tempuri", "http://tempuri.org/");
+            XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
+            foreach (XmlNode drugNode in drugNodes)
+            {
+                string odr_seq = drugNode["odr_seq"]?.InnerText;
+                string prs_id = drugNode["prs_id"]?.InnerText;
+                string prs_name = drugNode["prs_name"]?.InnerText;
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
+                string prs_spec = drugNode["prs_spec"]?.InnerText;
+                string prs_stk = drugNode["prs_stk"]?.InnerText;
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
+                string drug_qty = drugNode["drug_qty"]?.InnerText;
+                string drug_day = drugNode["drug_day"]?.InnerText;
+                string drug_way1 = drugNode["drug_way1"]?.InnerText;
+                string drug_way2 = drugNode["drug_way2"]?.InnerText;
+                string del_mark = drugNode["del_mark"]?.InnerText;
+
+                if (orderClasses.Count == 0)
+                {
+                    OrderClass orderClass = new OrderClass();
+                    orderClass.GUID = Guid.NewGuid().ToString();
+                    orderClass.PRI_KEY = barcode;
+                    orderClass.藥局代碼 = "OPD";
+                    orderClass.藥袋類型 = input_mark;
+                    orderClass.領藥號 = que_no;
+                    orderClass.病房 = que_unit;
+                    orderClass.病歷號 = patient_no;
+                    orderClass.病人姓名 = patient_name;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.就醫時間 = ipd_date.StringToAnnoDomini().ToDateTimeString_6();
+                    orderClass.醫師代碼 = dr_name;
+                    orderClass.藥袋條碼 = barcode;
+                    orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
+                    orderClass.開方日期 = xml_create_time;
+
+                    orderClass.批序 = odr_seq;
+                    orderClass.藥品碼 = prs_stk;
+                    orderClass.藥品名稱 = prs_name;
+                    orderClass.劑量單位 = prs_srv_unit;
+                    orderClass.天數 = drug_day;
+                    orderClass.單次劑量 = drug_uqty;
+                    orderClass.頻次 = drug_way1;
+                    orderClass.途徑 = drug_way2;
+                    orderClass.交易量 = (CalculateProduct(drug_qty) * -1).ToString();
+                    orderClass.狀態 = "未過帳";
+
+                    orderClasses_add.Add(orderClass);
+                }
+                else
+                {
+
+                }
+            }
+
+            if (orderClasses.Count == 0) orderClasses = orderClasses_add;
+            List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
+            if (list_value_add.Count > 0)
+            {
+                OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
+            }
+
+            returnData.Code = 200;
             returnData.Data = orderClasses;
-            return returnData.JsonSerializationt(true);
+            returnData.Result = $"取得醫令成功,共{orderClasses.Count}筆資料,新增{orderClasses_add.Count}筆資料";
+
+        }
+        public void GetCodeSH_XML(string Xml, ref returnData returnData)
+        {
+            string[] Node_array_pat = new string[] { "soap:Body", "GetCodeSH_XMLResponse", "GetCodeSH_XMLResult", "data", "pat" };
+            string[] Node_array_drug = new string[] { "soap:Body", "GetCodeSH_XMLResponse", "GetCodeSH_XMLResult", "data", "pat", "drug" };
+            XmlElement xmlElement = Xml.Xml_GetElement(Node_array_pat);
+            if (xmlElement == null)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"HIS查無此藥袋資料";
+                return;
+            }
+            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");
+            string que_no = xmlElement.Xml_GetInnerXml("que_no");
+            string que_unit = xmlElement.Xml_GetInnerXml("que_unit");
+            string patient_no = xmlElement.Xml_GetInnerXml("patient_no");
+            string patient_name = xmlElement.Xml_GetInnerXml("patient_name");
+            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");
+            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday");
+            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no");
+            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed");
+            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date");
+            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");
+            string odr_date = xmlElement.Xml_GetInnerXml("odr_date");
+            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept");
+            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla");
+            string dr_name = xmlElement.Xml_GetInnerXml("dr_name");
+            string prt_date = xmlElement.Xml_GetInnerXml("prt_date");
+            string que_seq = xmlElement.Xml_GetInnerXml("que_seq");
+            string create_date = xmlElement.Xml_GetInnerXml("create_date");
+            string mod_date = xmlElement.Xml_GetInnerXml("mod_date");
+            string barcode = xmlElement.Xml_GetInnerXml("barcode");
+            string xml_create_time = xmlElement.Xml_GetInnerXml("xml_create_time");
+
+            List<OrderClass> orderClasses = new List<OrderClass>();
+            if (barcode.StringIsEmpty())
+            {
+                barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
+            }
+            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            List<OrderClass> orderClasses_buf = new List<OrderClass>();
+            List<OrderClass> orderClasses_add = new List<OrderClass>();
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Xml);
+            XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsmgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+            nsmgr.AddNamespace("tempuri", "http://tempuri.org/");
+            XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
+            foreach (XmlNode drugNode in drugNodes)
+            {
+                string odr_seq = drugNode["odr_seq"]?.InnerText;
+                string prs_id = drugNode["prs_id"]?.InnerText;
+                string prs_name = drugNode["prs_name"]?.InnerText;
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
+                string prs_spec = drugNode["prs_spec"]?.InnerText;
+                string prs_stk = drugNode["prs_stk"]?.InnerText;
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
+                string drug_qty = drugNode["drug_qty"]?.InnerText;
+                string drug_day = drugNode["drug_day"]?.InnerText;
+                string drug_way1 = drugNode["drug_way1"]?.InnerText;
+                string drug_way2 = drugNode["drug_way2"]?.InnerText;
+                string del_mark = drugNode["del_mark"]?.InnerText;
+
+                if (orderClasses.Count == 0)
+                {
+                    OrderClass orderClass = new OrderClass();
+                    orderClass.GUID = Guid.NewGuid().ToString();
+                    orderClass.PRI_KEY = barcode;
+                    orderClass.藥局代碼 = "OPD";
+                    orderClass.藥袋類型 = input_mark;
+                    orderClass.領藥號 = que_no;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.床號 = odr_bed;
+                    orderClass.病房 = que_unit;
+                    orderClass.病歷號 = patient_no;
+                    orderClass.病人姓名 = patient_name;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.就醫時間 = ipd_date.StringToAnnoDomini().ToDateTimeString_6();
+                    orderClass.醫師代碼 = dr_name;
+                    orderClass.藥袋條碼 = barcode;
+                    orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
+                    orderClass.開方日期 = xml_create_time;
+
+                    orderClass.批序 = odr_seq;
+                    orderClass.藥品碼 = prs_stk;
+                    orderClass.藥品名稱 = prs_name;
+                    orderClass.劑量單位 = prs_srv_unit;
+                    orderClass.天數 = drug_day;
+                    orderClass.單次劑量 = drug_uqty;
+                    orderClass.頻次 = drug_way1;
+                    orderClass.途徑 = drug_way2;
+                    orderClass.交易量 = (CalculateProduct(drug_qty) * -1).ToString();
+                    orderClass.狀態 = "未過帳";
+
+                    orderClasses_add.Add(orderClass);
+                }
+                else
+                {
+
+                }
+            }
+
+            if (orderClasses.Count == 0) orderClasses = orderClasses_add;
+            List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
+            if (list_value_add.Count > 0)
+            {
+                OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
+            }
+
+            returnData.Code = 200;
+            returnData.Data = orderClasses;
+            returnData.Result = $"取得醫令成功,共{orderClasses.Count}筆資料,新增{orderClasses_add.Count}筆資料";
+
+        }
+        public void GetCodeCTLI_XML(string Xml, ref returnData returnData)
+        {
+            string[] Node_array_pat = new string[] { "soap:Body", "GetCodeCTLI_XMLResponse", "GetCodeCTLI_XMLResult", "data", "pat" };
+            string[] Node_array_drug = new string[] { "soap:Body", "GetCodeCTLI_XMLResponse", "GetCodeCTLI_XMLResult", "data", "pat", "drug" };
+            XmlElement xmlElement = Xml.Xml_GetElement(Node_array_pat);
+            if (xmlElement == null)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"HIS查無此藥袋資料";
+                return;
+            }
+            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");
+            string que_no = xmlElement.Xml_GetInnerXml("que_no");
+            string que_unit = xmlElement.Xml_GetInnerXml("que_unit");
+            string patient_no = xmlElement.Xml_GetInnerXml("patient_no");
+            string patient_name = xmlElement.Xml_GetInnerXml("patient_name");
+            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");
+            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday");
+            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no");
+            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed");
+            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date");
+            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");
+            string odr_date = xmlElement.Xml_GetInnerXml("odr_date");
+            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept");
+            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla");
+            string dr_name = xmlElement.Xml_GetInnerXml("dr_name");
+            string prt_date = xmlElement.Xml_GetInnerXml("prt_date");
+            string que_seq = xmlElement.Xml_GetInnerXml("que_seq");
+            string create_date = xmlElement.Xml_GetInnerXml("create_date");
+            string mod_date = xmlElement.Xml_GetInnerXml("mod_date");
+            string barcode = xmlElement.Xml_GetInnerXml("barcode");
+            string xml_create_time = xmlElement.Xml_GetInnerXml("xml_create_time");
+
+            List<OrderClass> orderClasses = new List<OrderClass>();
+            if (barcode.StringIsEmpty())
+            {
+                barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
+            }
+            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            List<OrderClass> orderClasses_buf = new List<OrderClass>();
+            List<OrderClass> orderClasses_add = new List<OrderClass>();
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Xml);
+            XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsmgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+            nsmgr.AddNamespace("tempuri", "http://tempuri.org/");
+            XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
+            foreach (XmlNode drugNode in drugNodes)
+            {
+                string odr_seq = drugNode["odr_seq"]?.InnerText;
+                string prs_id = drugNode["prs_id"]?.InnerText;
+                string prs_name = drugNode["prs_name"]?.InnerText;
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
+                string prs_spec = drugNode["prs_spec"]?.InnerText;
+                string prs_stk = drugNode["prs_stk"]?.InnerText;
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
+                string drug_qty = drugNode["drug_qty"]?.InnerText;
+                string drug_day = drugNode["drug_day"]?.InnerText;
+                string drug_way1 = drugNode["drug_way1"]?.InnerText;
+                string drug_way2 = drugNode["drug_way2"]?.InnerText;
+                string del_mark = drugNode["del_mark"]?.InnerText;
+
+                if (orderClasses.Count == 0)
+                {
+                    OrderClass orderClass = new OrderClass();
+                    orderClass.GUID = Guid.NewGuid().ToString();
+                    orderClass.PRI_KEY = barcode;
+                    orderClass.藥局代碼 = "OPD";
+                    orderClass.藥袋類型 = input_mark;
+                    orderClass.領藥號 = que_no;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.床號 = odr_bed;
+                    orderClass.病房 = que_unit;
+                    orderClass.病歷號 = patient_no;
+                    orderClass.病人姓名 = patient_name;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.就醫時間 = ipd_date.StringToAnnoDomini().ToDateTimeString_6();
+                    orderClass.醫師代碼 = dr_name;
+                    orderClass.藥袋條碼 = barcode;
+                    orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
+                    orderClass.開方日期 = xml_create_time;
+
+                    orderClass.批序 = odr_seq;
+                    orderClass.藥品碼 = prs_stk;
+                    orderClass.藥品名稱 = prs_name;
+                    orderClass.劑量單位 = prs_srv_unit;
+                    orderClass.天數 = drug_day;
+                    orderClass.單次劑量 = drug_uqty;
+                    orderClass.頻次 = drug_way1;
+                    orderClass.途徑 = drug_way2;
+                    double temp = CalculateProduct(drug_qty);
+                    orderClass.交易量 = (CalculateProduct(drug_qty) * -1).ToString();
+                    orderClass.狀態 = "未過帳";
+
+                    orderClasses_add.Add(orderClass);
+                }
+                else
+                {
+
+                }
+            }
+
+            if (orderClasses.Count == 0) orderClasses = orderClasses_add;
+            List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
+            if (list_value_add.Count > 0)
+            {
+                OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
+            }
+
+            returnData.Code = 200;
+            returnData.Data = orderClasses;
+            returnData.Result = $"取得醫令成功,共{orderClasses.Count}筆資料,新增{orderClasses_add.Count}筆資料";
+
+        }
+        public void GetCodeCTLO_XML(string Xml, ref returnData returnData)
+        {
+            string[] Node_array_pat = new string[] { "soap:Body", "GetCodeCTLO_XMLResponse", "GetCodeCTLO_XMLResult", "data", "pat" };
+            string[] Node_array_drug = new string[] { "soap:Body", "GetCodeCTLO_XMLResponse", "GetCodeCTLO_XMLResult", "data", "pat", "drug" };
+            XmlElement xmlElement = Xml.Xml_GetElement(Node_array_pat);
+            if (xmlElement == null)
+            {
+                returnData.Code = -200;
+                returnData.Result = $"HIS查無此藥袋資料";
+                return;
+            }
+            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");
+            string que_no = xmlElement.Xml_GetInnerXml("que_no");
+            string que_unit = xmlElement.Xml_GetInnerXml("que_unit");
+            string patient_no = xmlElement.Xml_GetInnerXml("patient_no");
+            string patient_name = xmlElement.Xml_GetInnerXml("patient_name");
+            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");
+            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday");
+            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no");
+            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed");
+            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date");
+            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");
+            string odr_date = xmlElement.Xml_GetInnerXml("odr_date");
+            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept");
+            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla");
+            string dr_name = xmlElement.Xml_GetInnerXml("dr_name");
+            string prt_date = xmlElement.Xml_GetInnerXml("prt_date");
+            string que_seq = xmlElement.Xml_GetInnerXml("que_seq");
+            string create_date = xmlElement.Xml_GetInnerXml("create_date");
+            string mod_date = xmlElement.Xml_GetInnerXml("mod_date");
+            string barcode = xmlElement.Xml_GetInnerXml("barcode");
+            string xml_create_time = xmlElement.Xml_GetInnerXml("xml_create_time");
+
+            List<OrderClass> orderClasses = new List<OrderClass>();
+            if (barcode.StringIsEmpty())
+            {
+                barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
+            }
+            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            List<OrderClass> orderClasses_buf = new List<OrderClass>();
+            List<OrderClass> orderClasses_add = new List<OrderClass>();
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Xml);
+            XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsmgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+            nsmgr.AddNamespace("tempuri", "http://tempuri.org/");
+            XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
+            foreach (XmlNode drugNode in drugNodes)
+            {
+                string odr_seq = drugNode["odr_seq"]?.InnerText;
+                string prs_id = drugNode["prs_id"]?.InnerText;
+                string prs_name = drugNode["prs_name"]?.InnerText;
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
+                string prs_spec = drugNode["prs_spec"]?.InnerText;
+                string prs_stk = drugNode["prs_stk"]?.InnerText;
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
+                string drug_qty = drugNode["drug_qty"]?.InnerText;
+                string drug_day = drugNode["drug_day"]?.InnerText;
+                string drug_way1 = drugNode["drug_way1"]?.InnerText;
+                string drug_way2 = drugNode["drug_way2"]?.InnerText;
+                string del_mark = drugNode["del_mark"]?.InnerText;
+
+                if (orderClasses.Count == 0)
+                {
+                    OrderClass orderClass = new OrderClass();
+                    orderClass.GUID = Guid.NewGuid().ToString();
+                    orderClass.PRI_KEY = barcode;
+                    orderClass.藥局代碼 = "OPD";
+                    orderClass.藥袋類型 = input_mark;
+                    orderClass.領藥號 = que_no;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.床號 = odr_bed;
+                    orderClass.病房 = que_unit;
+                    orderClass.病歷號 = patient_no;
+                    orderClass.病人姓名 = patient_name;
+                    orderClass.住院序號 = ipd_no;
+                    orderClass.就醫時間 = ipd_date.StringToAnnoDomini().ToDateTimeString_6();
+                    orderClass.醫師代碼 = dr_name;
+                    orderClass.藥袋條碼 = barcode;
+                    orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
+                    orderClass.開方日期 = xml_create_time;
+
+                    orderClass.批序 = odr_seq;
+                    orderClass.藥品碼 = prs_stk;
+                    orderClass.藥品名稱 = prs_name;
+                    orderClass.劑量單位 = prs_srv_unit;
+                    orderClass.天數 = drug_day;
+                    orderClass.單次劑量 = drug_uqty;
+                    orderClass.頻次 = drug_way1;
+                    orderClass.途徑 = drug_way2;
+                    orderClass.交易量 = (CalculateProduct(drug_qty) * -1).ToString();
+                    orderClass.狀態 = "未過帳";
+
+                    orderClasses_add.Add(orderClass);
+                }
+                else
+                {
+
+                }
+            }
+
+            if (orderClasses.Count == 0) orderClasses = orderClasses_add;
+            List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
+            if (list_value_add.Count > 0)
+            {
+                OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
+            }
+
+            returnData.Code = 200;
+            returnData.Data = orderClasses;
+            returnData.Result = $"取得醫令成功,共{orderClasses.Count}筆資料,新增{orderClasses_add.Count}筆資料";
+
         }
     }
-
 }
