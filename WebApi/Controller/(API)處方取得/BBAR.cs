@@ -77,7 +77,7 @@ namespace DB2VM
                 }
                 if (BarCode.Length == 9)
                 {
-                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4" || BarCode.Substring(0, 1) == "7")
+                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4")
                     {
                         System.Text.StringBuilder soap = new System.Text.StringBuilder();
                         soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
@@ -88,27 +88,27 @@ namespace DB2VM
                         soap.Append("</GetCodeOE_XML >");
                         soap.Append("</soap:Body>");
                         soap.Append("</soap:Envelope>");
-                        string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeOE_XML", soap);
-                        GetCodeOE_XML(Xml, ref returnData);
+                        string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetCodeOE_XML", soap);
+                        GetCodeOE_XML(Xml, ref returnData); // 警級用藥、首日量、出院帶藥
                         returnData.TimeTaken = myTimerBasic.ToString();
                         return returnData.JsonSerializationt(true);
                     }
-                    if (BarCode.Substring(0, 1) == "8")
-                    {
-                        System.Text.StringBuilder soap = new System.Text.StringBuilder();
-                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
-                        soap.Append("<soap:Body>");
-                        soap.Append("<GetCodeSH_XML  xmlns=\"http://tempuri.org/\">");
-                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
-                        soap.Append("</GetCodeSH_XML >");
-                        soap.Append("</soap:Body>");
-                        soap.Append("</soap:Envelope>");
-                        string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeSH_XML", soap);
-                        GetCodeSH_XML(Xml, ref returnData);
-                        returnData.TimeTaken = myTimerBasic.ToString();
-                        return returnData.JsonSerializationt(true);
-                    }
+                }
+                else if (BarCode.Length == 12)
+                {
+                    System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                    soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                    soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                    soap.Append("<soap:Body>");
+                    soap.Append("<GetCodeSH_XML  xmlns=\"http://tempuri.org/\">");
+                    soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                    soap.Append("</GetCodeSH_XML >");
+                    soap.Append("</soap:Body>");
+                    soap.Append("</soap:Envelope>");
+                    string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetCodeSH_XML", soap);
+                    GetCodeSH_XML(Xml, ref returnData);
+                    returnData.TimeTaken = myTimerBasic.ToString();
+                    return returnData.JsonSerializationt(true);
                 }
                 else if (BarCode.Length == 8)
                 {
@@ -121,24 +121,25 @@ namespace DB2VM
                     soap.Append("</GetCodeCTLI_XML >");
                     soap.Append("</soap:Body>");
                     soap.Append("</soap:Envelope>");
-                    string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeCTLI_XML", soap);
-                    GetCodeCTLI_XML(Xml, ref returnData);
+                    string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetCodeCTLI_XML", soap);
+                    GetCodeCTLI_XML(Xml, ref returnData);                 
 
-                    if (returnData.Code != 200)
-                    {
-                        soap = new System.Text.StringBuilder();
-                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
-                        soap.Append("<soap:Body>");
-                        soap.Append("<GetCodeCTLO_XML  xmlns=\"http://tempuri.org/\">");
-                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
-                        soap.Append("</GetCodeCTLO_XML >");
-                        soap.Append("</soap:Body>");
-                        soap.Append("</soap:Envelope>");
-                        Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeCTLO_XML", soap);
-                        GetCodeCTLO_XML(Xml, ref returnData);
-                    }
-
+                    returnData.TimeTaken = myTimerBasic.ToString();
+                    return returnData.JsonSerializationt(true);
+                }
+                else if (BarCode.Length == 15 || BarCode.Length == 17) 
+                {
+                    System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                    soap.Append("<?xml version=\"1.0\" encoding=\"utf - 8\"?>");
+                    soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                    soap.Append("<soap:Body>");
+                    soap.Append("<GetCodeCTLO_XML xmlns=\"http://tempuri.org/\">");
+                    soap.Append($"<odr_no>{BarCode}</odr_no>");
+                    soap.Append("</GetCodeCTLO_XML >");
+                    soap.Append("</soap:Body>");
+                    soap.Append("</soap:Envelope>");
+                    string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op==GetCodeCTLO_XML", soap);
+                    GetCodeCTLO_XML(Xml, ref returnData);
                     returnData.TimeTaken = myTimerBasic.ToString();
                     return returnData.JsonSerializationt(true);
                 }
@@ -248,7 +249,7 @@ namespace DB2VM
                 soap.Append("</GetCodeOE_XML >");
                 soap.Append("</soap:Body>");
                 soap.Append("</soap:Envelope>");
-                string Xml = Basic.Net.WebServicePost("http://192.168.8.108/TmhtcAdcWS/Service.asmx?op=GetCodeOE_XML", soap);
+                string Xml = Basic.Net.WebServicePost("http://192.168.163.69/TmhtcAdcWS/Service.asmx?op=GetCodeOE_XML", soap);
                 GetCodeOE_XML(Xml, ref returnData);
 
                 if (returnData.Code != 200)
@@ -307,32 +308,37 @@ namespace DB2VM
                 returnData.Result = $"HIS查無此藥袋資料";
                 return;
             }
-            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");
-            string que_no = xmlElement.Xml_GetInnerXml("que_no");
-            string que_unit = xmlElement.Xml_GetInnerXml("que_unit");
-            string patient_no = xmlElement.Xml_GetInnerXml("patient_no");
-            string patient_name = xmlElement.Xml_GetInnerXml("patient_name");
-            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");
-            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday");
-            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no");
-            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed");
-            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date");
-            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");
-            string odr_date = xmlElement.Xml_GetInnerXml("odr_date");
-            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept");
-            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla");
-            string dr_name = xmlElement.Xml_GetInnerXml("dr_name");
-            string prt_date = xmlElement.Xml_GetInnerXml("prt_date");
-            string que_seq = xmlElement.Xml_GetInnerXml("que_seq");
+            string input_mark = xmlElement.Xml_GetInnerXml("input_mark");  //首日量、緊急用藥:S  出院帶藥:H  UD長期用藥:U  門診:O  急診:E
+            string que_no = xmlElement.Xml_GetInnerXml("que_no"); //領藥號
+            string que_unit = xmlElement.Xml_GetInnerXml("que_unit"); //護理站
+            string patient_no = xmlElement.Xml_GetInnerXml("patient_no"); //病歷號
+            string patient_name = xmlElement.Xml_GetInnerXml("patient_name"); //病人姓名
+            string patient_sex = xmlElement.Xml_GetInnerXml("patient_sex");  //性別
+            string patient_brithday = xmlElement.Xml_GetInnerXml("patient_brithday"); //出生年月
+            string ipd_no = xmlElement.Xml_GetInnerXml("ipd_no"); //住院/門診序號
+            string ipd_date = xmlElement.Xml_GetInnerXml("ipd_date"); //入院日期
+            string odr_no = xmlElement.Xml_GetInnerXml("odr_no");//處方/退藥序號
+            string odr_date = xmlElement.Xml_GetInnerXml("odr_date"); //處方/退藥日期
+            string odr_dept = xmlElement.Xml_GetInnerXml("odr_dept"); //處方科別
+            string odr_cla = xmlElement.Xml_GetInnerXml("odr_cla"); //處方身份
+            string dr_name = xmlElement.Xml_GetInnerXml("dr_name"); //醫師姓名
+            string prt_date = xmlElement.Xml_GetInnerXml("prt_date"); //藥袋列印日期
+            string que_seq = xmlElement.Xml_GetInnerXml("que_seq"); //藥袋流水號
+
+            string odr_bed = xmlElement.Xml_GetInnerXml("odr_bed"); 
             string create_date = xmlElement.Xml_GetInnerXml("create_date");
             string mod_date = xmlElement.Xml_GetInnerXml("mod_date");
             string barcode = xmlElement.Xml_GetInnerXml("barcode");
             string xml_create_time = xmlElement.Xml_GetInnerXml("xml_create_time");
-            List<OrderClass> orderClasses = new List<OrderClass>();
+
+            input_mark = orderType[$"{input_mark}"];
             if (barcode.StringIsEmpty())
             {
                 barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
             }
+
+            List<OrderClass> orderClasses = new List<OrderClass>();
+            
             orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
             List<OrderClass> orderClasses_buf = new List<OrderClass>();
             List<OrderClass> orderClasses_add = new List<OrderClass>();
@@ -344,19 +350,20 @@ namespace DB2VM
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
             foreach (XmlNode drugNode in drugNodes)
             {
-                string odr_seq = drugNode["odr_seq"]?.InnerText;
-                string prs_id = drugNode["prs_id"]?.InnerText;
-                string prs_name = drugNode["prs_name"]?.InnerText;
-                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
-                string prs_spec = drugNode["prs_spec"]?.InnerText;
-                string prs_stk = drugNode["prs_stk"]?.InnerText;
-                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
-                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
-                string drug_qty = drugNode["drug_qty"]?.InnerText;
-                string drug_day = drugNode["drug_day"]?.InnerText;
-                string drug_way1 = drugNode["drug_way1"]?.InnerText;
-                string drug_way2 = drugNode["drug_way2"]?.InnerText;
-                string del_mark = drugNode["del_mark"]?.InnerText;
+                string odr_seq = drugNode["odr_seq"]?.InnerText;  //處置流水號
+                string prs_id = drugNode["prs_id"]?.InnerText; //處置代碼
+                string prs_name = drugNode["prs_name"]?.InnerText;  //處置名稱
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;  //學名/品名
+                string prs_spec = drugNode["prs_spec"]?.InnerText;  //規格
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText; //服用單位
+
+                string prs_stk = drugNode["prs_stk"]?.InnerText; //庫存對照碼
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText; //次劑量
+                string drug_qty = drugNode["drug_qty"]?.InnerText; //總藥量
+                string drug_day = drugNode["drug_day"]?.InnerText;//使用天數
+                string drug_way1 = drugNode["drug_way1"]?.InnerText; //頻率
+                string drug_way2 = drugNode["drug_way2"]?.InnerText; //途徑
+                string del_mark = drugNode["del_mark"]?.InnerText;  //刪除註記
 
                 if (orderClasses.Count == 0)
                 {
@@ -374,7 +381,7 @@ namespace DB2VM
                     orderClass.醫師代碼 = dr_name;
                     orderClass.藥袋條碼 = barcode;
                     orderClass.產出時間 = DateTime.Now.ToDateTimeString_6();
-                    orderClass.開方日期 = xml_create_time;
+                    orderClass.開方日期 = odr_date.StringToAnnoDomini().ToDateTimeString_6(); ;
 
                     orderClass.批序 = odr_seq;
                     orderClass.藥品碼 = prs_stk;
@@ -389,18 +396,12 @@ namespace DB2VM
 
                     orderClasses_add.Add(orderClass);
                 }
-                else
-                {
-
-                }
+                
             }
 
             if (orderClasses.Count == 0) orderClasses = orderClasses_add;
             List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
-            if (list_value_add.Count > 0)
-            {
-                OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
-            }
+            if (list_value_add.Count > 0) OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
 
             returnData.Code = 200;
             returnData.Data = orderClasses;
@@ -750,5 +751,13 @@ namespace DB2VM
             returnData.Result = $"取得醫令成功,共{orderClasses.Count}筆資料,新增{orderClasses_add.Count}筆資料";
 
         }
+        private Dictionary<string, string> orderType = new Dictionary<string, string>
+        {
+            { "S","STKN"},
+            { "H","出院帶藥"},
+            { "U","UD長期用藥"},
+            { "O","門診"},
+            { "E","急診"},
+        };
     }
 }

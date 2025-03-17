@@ -37,27 +37,15 @@ namespace DB2VM.Controller
             soap.Append("</soap:Body>");
             soap.Append("</soap:Envelope>");
             string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetSTK_XML", soap);
-            //string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetSTK_XML", soap);
-            //string[] Node_array = new string[] { "soap:Body", "Drug_DATAResponse", "Drug_DATAResult"};
-
-            //string[] Node_array = new string[] { "soap:Body", "Drug_DATAResponse", "Drug_DATAResult", "diffgr:diffgram", "NewDataSet", "Temp1" };
-            //List<XmlElement> xmlElements = Xml.Xml_GetElements(Node_array);
-            //string[] Node_array = new string[] { "soap:Body", "GetSTK_XMLResponse", "GetSTK_XMLResult", "data", "drug" };
-
-
-
+        
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(Xml);
 
             XmlNamespaceManager nsManager = new XmlNamespaceManager(xmlDoc.NameTable);
             nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
             nsManager.AddNamespace("tempuri", "http://tempuri.org/");
-            //nsManager.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            //nsManager.AddNamespace("xsd", "http://www.w3.org/2001/XMLSchema");
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//data/drug", nsManager);
-            //XmlNodeList temp1Nodes = xmlDoc.SelectNodes("//tempuri:drug", nsManager);
             List<medClass> medClasses = new List<medClass>();
-
             if (drugNodes == null || drugNodes.Count == 0)
             {
                 return "[]";
