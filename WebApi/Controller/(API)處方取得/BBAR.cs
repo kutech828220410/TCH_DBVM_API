@@ -350,20 +350,20 @@ namespace DB2VM
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
             foreach (XmlNode drugNode in drugNodes)
             {
-                string odr_seq = drugNode["odr_seq"]?.InnerText;  //處置流水號
-                string prs_id = drugNode["prs_id"]?.InnerText; //處置代碼
-                string prs_name = drugNode["prs_name"]?.InnerText;  //處置名稱
-                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;  //學名/品名
-                string prs_spec = drugNode["prs_spec"]?.InnerText;  //規格
-                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText; //服用單位
+                string odr_seq = drugNode["odr_seq"]?.InnerText.Trim();  //處置流水號
+                string prs_id = drugNode["prs_id"]?.InnerText.Trim(); //處置代碼
+                string prs_name = drugNode["prs_name"]?.InnerText.Trim();  //處置名稱
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText.Trim();  //學名/品名
+                string prs_spec = drugNode["prs_spec"]?.InnerText.Trim();  //規格
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText.Trim(); //服用單位
 
-                string prs_stk = drugNode["prs_stk"]?.InnerText; //庫存對照碼
-                string drug_uqty = drugNode["drug_uqty"]?.InnerText; //次劑量
-                string drug_qty = drugNode["drug_qty"]?.InnerText; //總藥量
-                string drug_day = drugNode["drug_day"]?.InnerText;//使用天數
-                string drug_way1 = drugNode["drug_way1"]?.InnerText; //頻率
-                string drug_way2 = drugNode["drug_way2"]?.InnerText; //途徑
-                string del_mark = drugNode["del_mark"]?.InnerText;  //刪除註記
+                string prs_stk = drugNode["prs_stk"]?.InnerText.Trim(); //庫存對照碼
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText.Trim(); //次劑量
+                string drug_qty = drugNode["drug_qty"]?.InnerText.Trim(); //總藥量
+                string drug_day = drugNode["drug_day"]?.InnerText.Trim();//使用天數
+                string drug_way1 = drugNode["drug_way1"]?.InnerText.Trim(); //頻率
+                string drug_way2 = drugNode["drug_way2"]?.InnerText.Trim(); //途徑
+                string del_mark = drugNode["del_mark"]?.InnerText.Trim();  //刪除註記
 
                 if (orderClasses.Count == 0)
                 {
@@ -457,19 +457,19 @@ namespace DB2VM
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
             foreach (XmlNode drugNode in drugNodes)
             {
-                string odr_seq = drugNode["odr_seq"]?.InnerText;
-                string prs_id = drugNode["prs_id"]?.InnerText;
-                string prs_name = drugNode["prs_name"]?.InnerText;
-                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
-                string prs_spec = drugNode["prs_spec"]?.InnerText;
-                string prs_stk = drugNode["prs_stk"]?.InnerText;
-                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
-                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
-                string drug_qty = drugNode["drug_qty"]?.InnerText;
-                string drug_day = drugNode["drug_day"]?.InnerText;
-                string drug_way1 = drugNode["drug_way1"]?.InnerText;
-                string drug_way2 = drugNode["drug_way2"]?.InnerText;
-                string del_mark = drugNode["del_mark"]?.InnerText;
+                string odr_seq = drugNode["odr_seq"]?.InnerText.Trim();
+                string prs_id = drugNode["prs_id"]?.InnerText.Trim();
+                string prs_name = drugNode["prs_name"]?.InnerText.Trim();
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText.Trim();
+                string prs_spec = drugNode["prs_spec"]?.InnerText.Trim();
+                string prs_stk = drugNode["prs_stk"]?.InnerText.Trim();
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText.Trim();
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText.Trim();
+                string drug_qty = drugNode["drug_qty"]?.InnerText.Trim();
+                string drug_day = drugNode["drug_day"]?.InnerText.Trim();
+                string drug_way1 = drugNode["drug_way1"]?.InnerText.Trim();
+                string drug_way2 = drugNode["drug_way2"]?.InnerText.Trim();
+                string del_mark = drugNode["del_mark"]?.InnerText.Trim();
 
                 if (orderClasses.Count == 0)
                 {
@@ -571,19 +571,19 @@ namespace DB2VM
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
             foreach (XmlNode drugNode in drugNodes)
             {
-                string odr_seq = drugNode["odr_seq"]?.InnerText;
-                string prs_id = drugNode["prs_id"]?.InnerText;
-                string prs_name = drugNode["prs_name"]?.InnerText;
-                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
-                string prs_spec = drugNode["prs_spec"]?.InnerText;
-                string prs_stk = drugNode["prs_stk"]?.InnerText;
-                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
-                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
-                string drug_qty = drugNode["drug_qty"]?.InnerText;
-                string drug_day = drugNode["drug_day"]?.InnerText;
-                string drug_way1 = drugNode["drug_way1"]?.InnerText;
-                string drug_way2 = drugNode["drug_way2"]?.InnerText;
-                string del_mark = drugNode["del_mark"]?.InnerText;
+                string odr_seq = drugNode["odr_seq"]?.InnerText.Trim();
+                string prs_id = drugNode["prs_id"]?.InnerText.Trim();
+                string prs_name = drugNode["prs_name"]?.InnerText.Trim();
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText.Trim();
+                string prs_spec = drugNode["prs_spec"]?.InnerText.Trim();
+                string prs_stk = drugNode["prs_stk"]?.InnerText.Trim();
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText.Trim();
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText.Trim();
+                string drug_qty = drugNode["drug_qty"]?.InnerText.Trim();
+                string drug_day = drugNode["drug_day"]?.InnerText.Trim();
+                string drug_way1 = drugNode["drug_way1"]?.InnerText.Trim();
+                string drug_way2 = drugNode["drug_way2"]?.InnerText.Trim();
+                string del_mark = drugNode["del_mark"]?.InnerText.Trim();
 
                 if (orderClasses.Count == 0)
                 {
@@ -686,19 +686,19 @@ namespace DB2VM
             XmlNodeList drugNodes = xmlDoc.SelectNodes("//drug", nsmgr);
             foreach (XmlNode drugNode in drugNodes)
             {
-                string odr_seq = drugNode["odr_seq"]?.InnerText;
-                string prs_id = drugNode["prs_id"]?.InnerText;
-                string prs_name = drugNode["prs_name"]?.InnerText;
-                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText;
-                string prs_spec = drugNode["prs_spec"]?.InnerText;
-                string prs_stk = drugNode["prs_stk"]?.InnerText;
-                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText;
-                string drug_uqty = drugNode["drug_uqty"]?.InnerText;
-                string drug_qty = drugNode["drug_qty"]?.InnerText;
-                string drug_day = drugNode["drug_day"]?.InnerText;
-                string drug_way1 = drugNode["drug_way1"]?.InnerText;
-                string drug_way2 = drugNode["drug_way2"]?.InnerText;
-                string del_mark = drugNode["del_mark"]?.InnerText;
+                string odr_seq = drugNode["odr_seq"]?.InnerText.Trim();
+                string prs_id = drugNode["prs_id"]?.InnerText.Trim();
+                string prs_name = drugNode["prs_name"]?.InnerText.Trim();
+                string prs_sc_name = drugNode["prs_sc_name"]?.InnerText.Trim();
+                string prs_spec = drugNode["prs_spec"]?.InnerText.Trim();
+                string prs_stk = drugNode["prs_stk"]?.InnerText.Trim();
+                string prs_srv_unit = drugNode["prs_srv_unit"]?.InnerText.Trim();
+                string drug_uqty = drugNode["drug_uqty"]?.InnerText.Trim();
+                string drug_qty = drugNode["drug_qty"]?.InnerText.Trim();
+                string drug_day = drugNode["drug_day"]?.InnerText.Trim();
+                string drug_way1 = drugNode["drug_way1"]?.InnerText.Trim();
+                string drug_way2 = drugNode["drug_way2"]?.InnerText.Trim();
+                string del_mark = drugNode["del_mark"]?.InnerText.Trim();
 
                 if (orderClasses.Count == 0)
                 {

@@ -53,13 +53,14 @@ namespace DB2VM.Controller
 
             foreach (XmlNode node in drugNodes)
             {
-                string 藥品碼 = node.SelectSingleNode("prs_stk")?.InnerText ?? "";
-                string 藥品名稱 = node.SelectSingleNode("prs_name")?.InnerText ?? "";
-                string 藥品學名 = node.SelectSingleNode("prs_sc_name")?.InnerText ?? "";
-                string 管制級別 = node.SelectSingleNode("control_level")?.InnerText ?? "";
-                string 圖片網址 = node.SelectSingleNode("url")?.InnerText ?? "";
-                string 最小包裝單位 = node.SelectSingleNode("prs_prc_unit")?.InnerText ?? "";
-                string 類別 = node.SelectSingleNode("med_type")?.InnerText ?? "";
+                string 藥品碼 = (node.SelectSingleNode("prs_stk")?.InnerText ?? "").Trim();
+                string 藥品名稱 = (node.SelectSingleNode("prs_name")?.InnerText ?? "").Trim();
+                string 藥品學名 = (node.SelectSingleNode("prs_sc_name")?.InnerText ?? "").Trim();
+                string 管制級別 = (node.SelectSingleNode("control_level")?.InnerText ?? "").Trim();
+                string 圖片網址 = (node.SelectSingleNode("url")?.InnerText ?? "").Trim();
+                string 最小包裝單位 = (node.SelectSingleNode("prs_prc_unit")?.InnerText ?? "").Trim();
+                string 類別 = (node.SelectSingleNode("med_type")?.InnerText ?? "").Trim();
+
 
 
                 // 檢查 MCODE 是否為空
