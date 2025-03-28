@@ -77,7 +77,7 @@ namespace DB2VM
                 }
                 if (BarCode.Length == 9)
                 {
-                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4")
+                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4" || BarCode.Substring(0, 1) == "L")
                     {
                         System.Text.StringBuilder soap = new System.Text.StringBuilder();
                         soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
