@@ -77,22 +77,22 @@ namespace DB2VM
                 }
                 if (BarCode.Length == 9)
                 {
-                    if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4" || BarCode.Substring(0, 1) == "L")
-                    {
-                        System.Text.StringBuilder soap = new System.Text.StringBuilder();
-                        soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-                        soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
-                        soap.Append("<soap:Body>");
-                        soap.Append("<GetCodeOE_XML  xmlns=\"http://tempuri.org/\">");
-                        soap.Append($"<print_barcode>{BarCode}</print_barcode>");
-                        soap.Append("</GetCodeOE_XML >");
-                        soap.Append("</soap:Body>");
-                        soap.Append("</soap:Envelope>");
-                        string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetCodeOE_XML", soap);
-                        GetCodeOE_XML(Xml, ref returnData); // 警級用藥、首日量、出院帶藥
-                        returnData.TimeTaken = myTimerBasic.ToString();
-                        return returnData.JsonSerializationt(true);
-                    }
+                    //if (BarCode.Substring(0, 1) == "1" || BarCode.Substring(0, 1) == "4" || BarCode.Substring(0, 1) == "L")
+                    //{
+                    System.Text.StringBuilder soap = new System.Text.StringBuilder();
+                    soap.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                    soap.Append("<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
+                    soap.Append("<soap:Body>");
+                    soap.Append("<GetCodeOE_XML  xmlns=\"http://tempuri.org/\">");
+                    soap.Append($"<print_barcode>{BarCode}</print_barcode>");
+                    soap.Append("</GetCodeOE_XML >");
+                    soap.Append("</soap:Body>");
+                    soap.Append("</soap:Envelope>");
+                    string Xml = Basic.Net.WebServicePost("http://192.168.8.108/Service.asmx?op=GetCodeOE_XML", soap);
+                    GetCodeOE_XML(Xml, ref returnData); // 警級用藥、首日量、出院帶藥
+                    returnData.TimeTaken = myTimerBasic.ToString();
+                    return returnData.JsonSerializationt(true);
+                    //}
                 }
                 else if (BarCode.Length == 12)
                 {
@@ -337,9 +337,8 @@ namespace DB2VM
                 barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
             }
 
-            List<OrderClass> orderClasses = new List<OrderClass>();
-            
-            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+
+            List<OrderClass> orderClasses = OrderClass.get_by_barcode("http://127.0.0.1:4433", barcode);
             List<OrderClass> orderClasses_buf = new List<OrderClass>();
             List<OrderClass> orderClasses_add = new List<OrderClass>();
             XmlDocument xmlDoc = new XmlDocument();
@@ -365,11 +364,11 @@ namespace DB2VM
                 string drug_way2 = drugNode["drug_way2"]?.InnerText.Trim(); //途徑
                 string del_mark = drugNode["del_mark"]?.InnerText.Trim();  //刪除註記
 
-                if (orderClasses.Count == 0)
+                if (orderClasses == null || orderClasses.Count == 0)
                 {
                     OrderClass orderClass = new OrderClass();
                     orderClass.GUID = Guid.NewGuid().ToString();
-                    orderClass.PRI_KEY = barcode;
+                    orderClass.PRI_KEY = $"{barcode}-{patient_no}";
                     orderClass.藥局代碼 = "OPD";
                     orderClass.藥袋類型 = input_mark;
                     orderClass.領藥號 = que_no;
@@ -399,7 +398,7 @@ namespace DB2VM
                 
             }
 
-            if (orderClasses.Count == 0) orderClasses = orderClasses_add;
+            if (orderClasses == null || orderClasses.Count == 0) orderClasses = orderClasses_add;
             List<object[]> list_value_add = orderClasses_add.ClassToSQL<OrderClass, enum_醫囑資料>();
             if (list_value_add.Count > 0) OrderClass.add("http://127.0.0.1:4433", orderClasses_add);
 
@@ -446,7 +445,7 @@ namespace DB2VM
             {
                 barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
             }
-            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            orderClasses = OrderClass.get_by_barcode("http://127.0.0.1:4433", barcode);
             List<OrderClass> orderClasses_buf = new List<OrderClass>();
             List<OrderClass> orderClasses_add = new List<OrderClass>();
             XmlDocument xmlDoc = new XmlDocument();
@@ -560,7 +559,7 @@ namespace DB2VM
             {
                 barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
             }
-            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            orderClasses = OrderClass.get_by_barcode("http://127.0.0.1:4433", barcode);
             List<OrderClass> orderClasses_buf = new List<OrderClass>();
             List<OrderClass> orderClasses_add = new List<OrderClass>();
             XmlDocument xmlDoc = new XmlDocument();
@@ -675,7 +674,7 @@ namespace DB2VM
             {
                 barcode = $"{que_no},{odr_no},{patient_no},{create_date}";
             }
-            orderClasses = OrderClass.get_by_pri_key("http://127.0.0.1:4433", barcode);
+            orderClasses = OrderClass.get_by_barcode("http://127.0.0.1:4433", barcode);
             List<OrderClass> orderClasses_buf = new List<OrderClass>();
             List<OrderClass> orderClasses_add = new List<OrderClass>();
             XmlDocument xmlDoc = new XmlDocument();
